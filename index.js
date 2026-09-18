@@ -15,6 +15,9 @@ const feelsLike = document.querySelector('#feelsLike');
 //loader
 const loading = document.querySelector('#loading');
 
+//city not found message
+const cityNotFound = document.querySelector('#error');
+
 search.addEventListener('click',searchCity);
 
 cityInput.addEventListener('keypress', (e) => {
@@ -32,6 +35,7 @@ async function searchCity(){
   }
 
   loading.classList.remove('hidden');
+  cityNotFound.classList.add('hidden');
   search.disabled = true;
 
   try {
@@ -52,7 +56,7 @@ async function searchCity(){
 
       feelsLike.textContent = `Feels Like: ${data.current.feelslike_c}°C`;
   } catch (error) {
-    alert('Failed to fetch weather data. Please try again later.');
+    cityNotFound.classList.remove('hidden');
   } finally {
     loading.classList.add('hidden');
     search.disabled = false;
