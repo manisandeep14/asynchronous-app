@@ -12,6 +12,9 @@ const humidity = document.querySelector('#humidity');
 const wind = document.querySelector('#wind');
 const feelsLike = document.querySelector('#feelsLike');
 
+//loader
+const loading = document.querySelector('#loading');
+
 search.addEventListener('click',searchCity);
 
 cityInput.addEventListener('keypress', (e) => {
@@ -21,9 +24,17 @@ cityInput.addEventListener('keypress', (e) => {
 });
 
 async function searchCity(){
+  const city = cityInput.value.trim();
+
+  if(city === ''){
+    alert('Please enter a city name');
+    return;
+  }
+
+  loading.classList.remove('hidden');
+  search.disabled = true;
+
   try {
-    const city = cityInput.value.trim();
-      if(city !== ''){
       const data = await fetchWeatherData(city);
 
       cityName.textContent = data.location.name;
@@ -40,15 +51,13 @@ async function searchCity(){
       wind.textContent = `Wind Speed: ${data.current.wind_kph} kph`;
 
       feelsLike.textContent = `Feels Like: ${data.current.feelslike_c}°C`;
-
-      
-    }else{
-      alert('Please enter a city name');
-    } 
   } catch (error) {
     alert('Failed to fetch weather data. Please try again later.');
-  } 
-  cityInput.value = '';
+  } finally {
+    loading.classList.add('hidden');
+    search.disabled = false;
+    cityInput.value = '';
+  }
 }
 
 async function fetchWeatherData(cityName) {
@@ -58,3 +67,4 @@ async function fetchWeatherData(cityName) {
     const data = await response.json();
     return data;
 }
+
