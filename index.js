@@ -28,7 +28,7 @@ const clearBtn = document.querySelector('#clearBtn');
 
 search.addEventListener('click',searchCity);
 
-cityInput.addEventListener('keypress', (e) => {
+cityInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         searchCity();
     }
@@ -80,10 +80,14 @@ async function fetchWeatherData(cityName) {
     const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${cityName}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
+    if(data.error){
+      throw new Error(data.error.message);
+    }
     return data;
   } catch (error) {
+    cityNotFound.textContent = error.message;
     cityNotFound.classList.remove('hidden');
-    new error('City not found');
+    throw error;
   }  
 }
 
@@ -94,14 +98,16 @@ function renderLocalStorage(){
 function saveToLocalStorage(cityName, temperature, condition) {
 
   const List = renderLocalStorage();
-  const cityAlreadyExists = List.some(item => item.cityName  === cityName);
+  const existingCity = List.find(item => item.cityName.toLowerCase() === cityName.toLowerCase());
 
-  if (cityAlreadyExists) {
-    console.log('City already exists in the list');
-    return;
+  if (existingCity) {
+    existingCity.cityName = cityName;
+    existingCity.temperature = temperature;
+    existingCity.condition = condition;
+  } else {
+    List.push({ cityName, temperature, condition });
   }
 
-  List.push({ cityName, temperature, condition });
   localStorage.setItem('searchedList', JSON.stringify(List));
 
 }
@@ -122,5 +128,15 @@ function renderHistoryList() {
     searchedCities.innerHTML += `<li>${item.cityName} - ${item.temperature}°C - ${item.condition}</li>`;
   });
 }
+
+//Dynamic touch feature to display the recently searched city weather
+
+searchedCities.addEventListener('click', (e) => {
+  if (e.target.tagName === 'LI') {
+    const cityName = e.target.textContent.split(' - ')[0];
+    cityInput.value = cityName;
+    searchCity();
+  }
+});
 
 renderHistoryList();
