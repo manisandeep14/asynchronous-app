@@ -18,6 +18,14 @@ const loading = document.querySelector('#loading');
 //city not found message
 const cityNotFound = document.querySelector('#error');
 
+//local storage for last searched city
+const searchedCities = document.querySelector('#historyList');
+
+const clearBtn = document.querySelector('#clearBtn');
+
+
+
+
 search.addEventListener('click',searchCity);
 
 cityInput.addEventListener('keypress', (e) => {
@@ -44,7 +52,6 @@ async function searchCity(){
       cityName.textContent = data.location.name;
 
       weatherIcon.src = data.current.condition.icon;
-      console.log(data.current.condition.icon);
 
       temperature.textContent = `${data.current.temp_c}°C`;
 
@@ -55,6 +62,9 @@ async function searchCity(){
       wind.textContent = `Wind Speed: ${data.current.wind_kph} kph`;
 
       feelsLike.textContent = `Feels Like: ${data.current.feelslike_c}°C`;
+
+      saveToLocalStorage(city, data.current.temp_c, data.current.condition.text);
+      renderHistoryList();
   } catch (error) {
     cityNotFound.classList.remove('hidden');
   } finally {
@@ -65,10 +75,52 @@ async function searchCity(){
 }
 
 async function fetchWeatherData(cityName) {
+  try{
     const apiKey = '4b9aca39f8d44ba787290557252107';
     const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${cityName}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
     return data;
+  } catch (error) {
+    cityNotFound.classList.remove('hidden');
+    new error('City not found');
+  }  
 }
 
+function renderLocalStorage(){
+  return JSON.parse(localStorage.getItem('searchedList')) || [];
+}
+
+function saveToLocalStorage(cityName, temperature, condition) {
+
+  const List = renderLocalStorage();
+  const cityAlreadyExists = List.some(item => item.cityName  === cityName);
+
+  if (cityAlreadyExists) {
+    console.log('City already exists in the list');
+    return;
+  }
+
+  List.push({ cityName, temperature, condition });
+  localStorage.setItem('searchedList', JSON.stringify(List));
+
+}
+
+
+function clearLocalStorage() {
+  localStorage.removeItem('searchedList');
+  historyList = [];
+  searchedCities.innerHTML = '';
+}
+
+clearBtn.addEventListener('click' ,clearLocalStorage);
+
+function renderHistoryList() {
+  const List = renderLocalStorage();
+  searchedCities.innerHTML = "";
+  List.forEach(item => {
+    searchedCities.innerHTML += `<li>${item.cityName} - ${item.temperature}°C - ${item.condition}</li>`;
+  });
+}
+
+renderHistoryList();
